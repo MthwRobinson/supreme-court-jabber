@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	http "net/http"
-	// "strings"
+	"strings"
 
 	goquery "github.com/PuerkitoBio/goquery"
 )
@@ -20,7 +20,7 @@ type OralArgument struct {
 }
 
 // Pulls the orgal arguments from a page on the Supreme Court website
-func GetOralArguments() {
+func GetOralArguments() []OralArgument {
 	client := &http.Client{}
 
 	response, err := client.Get(supremeCourtURL)
@@ -34,24 +34,27 @@ func GetOralArguments() {
 		log.Fatal(err)
 	}
 
+	var oralArguments []OralArgument
 	doc.Find("td").Each(func(i int, s *goquery.Selection) {
 		s.Find("a").Each(func(i int, s *goquery.Selection) {
 			argumentLink, _ := s.Attr("href")
-			argumentNumber := s.Text()
+			if strings.HasSuffix(argumentLink, ".pdf") {
+				argumentNumber := s.Text()
 
-			parent := s.Parent()
-			argumentName := parent.Next().Text()
-			argumentDate := parent.Parent().Next().Text()
+				parent := s.Parent()
+				argumentName := parent.Next().Text()
+				argumentDate := parent.Parent().Next().Text()
 
-			oralArgument := OralArgument{
-				number: argumentNumber,
-				name:   argumentName,
-				date:   argumentDate,
-				link:   argumentLink,
+				oralArgument := OralArgument{
+					number: argumentNumber,
+					name:   argumentName,
+					date:   argumentDate,
+					link:   argumentLink,
+				}
+				oralArguments = append(oralArguments, oralArgument)
 			}
-
-			fmt.Println(oralArgument)
 		})
 
 	})
+	return oralArguments
 }

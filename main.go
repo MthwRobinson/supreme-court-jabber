@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/MthwRobinson/supreme-court-jabber/data/http"
+	"github.com/MthwRobinson/supreme-court-jabber/data/argument_fetcher"
 )
 
 func main() {
