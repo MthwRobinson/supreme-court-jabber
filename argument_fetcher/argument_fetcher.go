@@ -5,23 +5,21 @@ import (
 	"fmt"
 	"log"
 	http "net/http"
+	// "strings"
 
 	goquery "github.com/PuerkitoBio/goquery"
 )
 
 const supremeCourtURL = "https://www.supremecourt.gov/oral_arguments/argument_transcript/2020"
 
-// Pulls the argument number from the row in the transcript table
-func getArgumentNumber(s *goquery.Selection) {
-	argumentLink := s.Find("a")
-	argumentNumber := argumentLink.Text()
-
-	if argumentNumber != "" {
-		link, _ := argumentLink.Attr("href")
-		fmt.Printf("%s: %s\n", argumentNumber, link)
-	}
+type OralArgument struct {
+	number string
+	name   string
+	date   string
+	link   string
 }
 
+// Pulls the orgal arguments from a page on the Supreme Court website
 func GetOralArguments() {
 	client := &http.Client{}
 
@@ -37,7 +35,23 @@ func GetOralArguments() {
 	}
 
 	doc.Find("td").Each(func(i int, s *goquery.Selection) {
-		getArgumentNumber(s)
+		s.Find("a").Each(func(i int, s *goquery.Selection) {
+			argumentLink, _ := s.Attr("href")
+			argumentNumber := s.Text()
+
+			parent := s.Parent()
+			argumentName := parent.Next().Text()
+			argumentDate := parent.Parent().Next().Text()
+
+			oralArgument := OralArgument{
+				number: argumentNumber,
+				name:   argumentName,
+				date:   argumentDate,
+				link:   argumentLink,
+			}
+
+			fmt.Println(oralArgument)
+		})
 
 	})
 }
