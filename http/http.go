@@ -3,13 +3,24 @@ package fetch_arguments
 
 import (
 	"fmt"
-	"golang.org/x/net/html"
 	"log"
-	"net/http"
-	"net/http/httputil"
+	http "net/http"
+
+	goquery "github.com/PuerkitoBio/goquery"
 )
 
-const supremeCourtURL = "https://www.supremecourt.gov/oral_arguments/argument_transcript/2021"
+const supremeCourtURL = "https://www.supremecourt.gov/oral_arguments/argument_transcript/2020"
+
+// Pulls the argument number from the row in the transcript table
+func getArgumentNumber(s *goquery.Selection) {
+	argumentLink := s.Find("a")
+	argumentNumber := argumentLink.Text()
+
+	if argumentNumber != "" {
+		link, _ := argumentLink.Attr("href")
+		fmt.Printf("%s: %s\n", argumentNumber, link)
+	}
+}
 
 func GetOralArguments() {
 	client := &http.Client{}
@@ -20,31 +31,13 @@ func GetOralArguments() {
 	}
 	defer response.Body.Close()
 
-	body, err := httputil.DumpResponse(response, true)
+	doc, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(string(body))
 
-	z := html.NewTokenizer(response.Body)
-	for {
-		tt := z.Next()
-		switch tt {
-		case html.ErrorToken:
-			fmt.Println("Done!")
-			return
-		case html.StartTagToken, html.EndTagToken:
-			token := z.Token()
-			if "a" == token.Data {
-				for _, attr := range token.Attr {
-					if attr.Key == "href" {
-						fmt.Println(attr.Val)
-					}
-				}
-			}
+	doc.Find("td").Each(func(i int, s *goquery.Selection) {
+		getArgumentNumber(s)
 
-		}
-
-	}
-
+	})
 }
